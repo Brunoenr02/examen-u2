@@ -9,6 +9,7 @@ import '../widgets/profile_screen_shell.dart';
 import '../widgets/profile_summary.dart';
 import '../view_models/profile_exit_view_model.dart';
 import '../view_models/profile_view_model.dart';
+import '../view_models/local_data_deletion_view_model.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -16,27 +17,34 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final exit = ref.watch(profileExitViewModelProvider);
+    final deletion = ref.watch(localDataDeletionViewModelProvider);
+    final busy = exit.isLoading || deletion.isLoading;
     final loading = ref.watch(profileViewModelProvider).isLoading;
     final routeAnimation =
         ModalRoute.of(context)?.animation ??
         const AlwaysStoppedAnimation<double>(1);
     return ConfirmationToastHost(
-      confirmed: exit.hasError,
-      message: 'No se pudo cerrar la sesión. Reintenta.',
-      isError: true,
-      noticeId: exit.error,
+      confirmed:
+          exit.hasError || deletion.hasError || deletion.asData?.value == true,
+      message: deletion.hasError
+          ? 'No se pudieron borrar los datos locales. Reintenta.'
+          : deletion.asData?.value == true
+          ? 'Copia sin conexión y clave eliminadas de este teléfono'
+          : 'No se pudo cerrar la sesión. Reintenta.',
+      isError: exit.hasError || deletion.hasError,
+      noticeId: (exit.error, deletion),
       child: PopScope(
-        canPop: !exit.isLoading,
+        canPop: !exit.isLoading && !deletion.isLoading,
         child: ProfileScreenShell(
           title: 'Perfil',
           close: true,
-          navigationEnabled: !exit.isLoading,
+          navigationEnabled: !exit.isLoading && !deletion.isLoading,
           onBack: () => context.pop(),
           child: AnimatedBuilder(
             animation: routeAnimation,
             builder: (context, _) => ContentReveal(
               loading: loading,
-              count: 5,
+              count: 6,
               play:
                   routeAnimation.status == AnimationStatus.completed ||
                   MediaQuery.disableAnimationsOf(context),
@@ -46,7 +54,7 @@ class ProfileScreen extends ConsumerWidget {
                   StaggerRevealItem(
                     order: 0,
                     child: ProfileSummary(
-                      onEdit: exit.isLoading
+                      onEdit: busy
                           ? null
                           : () => context.push('/home/profile/edit'),
                     ),
@@ -57,7 +65,7 @@ class ProfileScreen extends ConsumerWidget {
                     preserveBackdrop: true,
                     child: ProfileMenuSection(
                       title: 'Mi actividad',
-                      enabled: !exit.isLoading,
+                      enabled: !busy,
                       destinations: const [
                         (
                           icon: Icons.edit_note_rounded,
@@ -83,7 +91,7 @@ class ProfileScreen extends ConsumerWidget {
                     preserveBackdrop: true,
                     child: ProfileMenuSection(
                       title: 'Alertas y zonas',
-                      enabled: !exit.isLoading,
+                      enabled: !busy,
                       destinations: const [
                         (
                           icon: Icons.notifications_outlined,
@@ -104,7 +112,7 @@ class ProfileScreen extends ConsumerWidget {
                     preserveBackdrop: true,
                     child: ProfileMenuSection(
                       title: 'Privacidad',
-                      enabled: !exit.isLoading,
+                      enabled: !busy,
                       destinations: const [
                         (
                           icon: Icons.block_rounded,
@@ -114,9 +122,28 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   StaggerRevealItem(
                     order: 4,
+                    child: LoadingShimmer(
+                      isLoading: deletion.isLoading,
+                      loadingLabel: 'Borrando datos locales',
+                      child: OutlinedButton.icon(
+                        onPressed: exit.isLoading || deletion.isLoading
+                            ? null
+                            : () => ref
+                                  .read(
+                                    localDataDeletionViewModelProvider.notifier,
+                                  )
+                                  .delete(),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Borrar datos de este teléfono'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  StaggerRevealItem(
+                    order: 5,
                     child: LoadingShimmer(
                       isLoading: exit.isLoading,
                       loadingLabel: 'Cerrando sesión',
@@ -141,7 +168,7 @@ class ProfileScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        onPressed: exit.isLoading
+                        onPressed: busy
                             ? null
                             : () => ref
                                   .read(profileExitViewModelProvider.notifier)

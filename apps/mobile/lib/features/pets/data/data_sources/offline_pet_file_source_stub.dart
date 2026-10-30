@@ -3,6 +3,9 @@ import '../../domain/repositories/offline_pet_storage.dart';
 
 class OfflinePetFileSource implements OfflinePetStorage {
   @override
+  Future<void> deleteAll() async =>
+      throw UnsupportedError('Solo disponible en Android');
+  @override
   Future<List<Pet>?> read(String ownerId, {bool archived = false}) async =>
       null;
   @override

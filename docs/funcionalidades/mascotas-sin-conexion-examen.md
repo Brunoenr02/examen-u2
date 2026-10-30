@@ -42,3 +42,17 @@ adb shell run-as com.example.flutter_application_entrehuellas od -An -tx1 files/
 ```
 
 La comprobación de dos guardados debe mostrar IV distintos (bytes 1 a 12 después del byte de versión). Tras guardar y reiniciar la app sin red, Mis mascotas debe volver a mostrar Luna_Prueba; eso verifica que la clave persiste y la app puede autenticar y descifrar el archivo. El puente de este incremento es Android; iOS requiere su propio adaptador seguro, fuera del alcance de esta tarea.
+
+## Ítem 3 Respaldo pantalla y borrado
+
+Implementado para Android según [ADR-173](../decisiones/173-proteccion-y-borrado-copia-local-mascotas.md). Las evidencias de los ítems 1 y 2 están preservadas. AndroidManifest declara allowBackup=false; backup_rules.xml y data_extraction_rules.xml excluyen todos los dominios de datos tanto del respaldo como de la transferencia entre dispositivos.
+
+La sección Mis mascotas usa SecureScreen y el canal entrehuellas/screen_privacy para activar FLAG_SECURE antes de mostrar la lista. Al abrir Perfil la lista se oculta y se libera la bandera; al regresar se vuelve a proteger. Android 13+ deshabilita además las miniaturas de recientes para la actividad. El botón Borrar datos de este teléfono en Perfil elimina los JSON de mascotas (activas, archivadas y temporales de todas las cuentas) y el alias de AndroidKeyStore. La clave es de instalación. No borra mascotas del servidor, sesión ni borradores de reportes.
+
+Para repetir: con conexión cargar la lista y pulsar Guardar sin conexión; activar modo avión, apagar Wi-Fi y verificar la consulta local. Intentar una captura: sale negra. Abrir recientes y capturar la tarjeta negra. Volver y abrir Perfil; pulsar Borrar datos de este teléfono y capturar la confirmación. Repetir ls files y cat del ítem 1: el archivo no debe aparecer y cat devuelve No such file or directory. El borrado fue ejecutado durante la validación; el emulador quedó en Perfil y sin esa copia local.
+
+Archivos para capturar el código: AndroidManifest.xml, res/xml/backup_rules.xml, res/xml/data_extraction_rules.xml, MainActivity.kt (FLAG_SECURE y recientes), lib/core/presentation/widgets/secure_screen.dart (protección antes de mostrar), OfflinePetsCipher.kt (deleteKey), offline_pet_file_source.dart (deleteAll) y el ViewModel local_data_deletion_view_model.dart de Perfil.
+
+Validación: flutter analyze sin incidencias; 22 pruebas aprobadas, incluyendo dos regresiones de protección; APK debug compilado e instalado. En el paquete instalado ALLOW_BACKUP está ausente; no se ejecutó una restauración en otro dispositivo. Captura directa negra y tarjeta negra de recientes comprobadas. Perfil capturable y borrado real confirmado: archivo ausente, clave eliminada con containsAlias=false antes del éxito nativo. Evidencias reales: output/examen-item-3/recientes-protegidos.png, lista-protegida.png, perfil-datos-borrados.png y terminal-borrado.txt. No se implementan los ítems 4 y 5.
+
+Límite de validación adicional: una ejecución de profile_overview_test, profile_navigation_test y home_test terminó con 8 casos aprobados y 5 timeouts de pumpAndSettle en el arranque inicial de Inicio, antes de entrar a mascotas/perfil. Se conserva ese resultado como pendiente de navegación, sin cambiar las animaciones generales fuera del ítem 3.

@@ -1,0 +1,11 @@
+ANTES: adb shell run-as com.example.flutter_application_entrehuellas ls files
+datastore
+pets_MDFmMTRhNjctNjU5OS00NmZiLTkyYzYtN2JhM2U5YzY4OWE0_active.json
+profileInstalled
+report_drafts.sqlite
+DESPUÉS: adb shell run-as com.example.flutter_application_entrehuellas ls files
+datastore
+profileInstalled
+report_drafts.sqlite
+adb shell run-as com.example.flutter_application_entrehuellas cat files/pets_MDFmMTRhNjctNjU5OS00NmZiLTkyYzYtN2JhM2U5YzY4OWE0_active.json
+cat: files/pets_MDFmMTRhNjctNjU5OS00NmZiLTkyYzYtN2JhM2U5YzY4OWE0_active.json: No such file or directory

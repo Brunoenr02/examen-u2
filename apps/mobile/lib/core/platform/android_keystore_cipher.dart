@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 class AndroidKeystoreCipher {
   static const _channel = MethodChannel('entrehuellas/offline_pets_cipher');
 
+  Future<void> deleteKey() => _channel.invokeMethod<void>('deleteKey');
+
   Future<Uint8List> encrypt(Uint8List bytes, String context) =>
       _invoke('encrypt', bytes, context);
   Future<Uint8List> decrypt(Uint8List bytes, String context) =>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/presentation/widgets/secure_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/presentation/widgets/app_scaffold.dart';
@@ -108,7 +109,7 @@ class HomeScreen extends ConsumerWidget {
                               ? exploreContent!
                               : state.section == HomeSection.pets &&
                                     petsContent != null
-                              ? petsContent!
+                              ? SecureScreen(child: petsContent!)
                               : _UnavailableSection(section: state.section),
                         ),
                       ),

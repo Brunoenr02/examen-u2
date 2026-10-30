@@ -441,3 +441,5 @@ Pausa600ms restaurada; timeout20s para respuestas válidas tardías del proveedo
 - [Guardado de mascotas sin conexión para el ítem 1](mascotas-sin-conexion-examen.md): JSON privado legible y recuperación ante fallo remoto, limitado al examen.
 
 - Ítem 2 del examen: [cifrado de mascotas con Android Keystore](mascotas-sin-conexion-examen.md#ítem-2-cifrado-con-clave-custodiada-por-android), AES-GCM y reinstalación limpia; ADR-172.
+
+- Ítem 3 del examen: [respaldo, pantalla protegida y borrado local de mascotas](mascotas-sin-conexion-examen.md#ítem-3-respaldo-pantalla-y-borrado), ADR-173; validado en Android.

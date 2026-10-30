@@ -6,6 +6,8 @@ class OfflinePets {
   const OfflinePets(this.storage);
   final OfflinePetStorage storage;
 
+  Future<void> deleteAll() => storage.deleteAll();
+
   Future<void> save(String ownerId, List<Pet> pets, {bool archived = false}) {
     if (ownerId.isEmpty ||
         pets.any((p) => p.ownerId != ownerId || p.isArchived != archived)) {

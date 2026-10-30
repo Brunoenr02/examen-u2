@@ -15,6 +15,12 @@ class OfflinePetsCipher {
 
     private fun existingKey(): SecretKey? = keyStore.getKey(alias, null) as? SecretKey
 
+    @Synchronized
+    fun deleteKey() {
+        keyStore.deleteEntry(alias)
+        check(!keyStore.containsAlias(alias))
+    }
+
     private fun encryptionKey(): SecretKey = existingKey() ?: KeyGenerator.getInstance(
         KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
     ).apply {
