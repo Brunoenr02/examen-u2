@@ -56,3 +56,22 @@ Archivos para capturar el código: AndroidManifest.xml, res/xml/backup_rules.xml
 Validación: flutter analyze sin incidencias; 22 pruebas aprobadas, incluyendo dos regresiones de protección; APK debug compilado e instalado. En el paquete instalado ALLOW_BACKUP está ausente; no se ejecutó una restauración en otro dispositivo. Captura directa negra y tarjeta negra de recientes comprobadas. Perfil capturable y borrado real confirmado: archivo ausente, clave eliminada con containsAlias=false antes del éxito nativo. Evidencias reales: output/examen-item-3/recientes-protegidos.png, lista-protegida.png, perfil-datos-borrados.png y terminal-borrado.txt. No se implementan los ítems 4 y 5.
 
 Límite de validación adicional: una ejecución de profile_overview_test, profile_navigation_test y home_test terminó con 8 casos aprobados y 5 timeouts de pumpAndSettle en el arranque inicial de Inicio, antes de entrar a mascotas/perfil. Se conserva ese resultado como pendiente de navegación, sin cambiar las animaciones generales fuera del ítem 3.
+
+## Ítem 4 Tres pruebas unitarias del guardado
+
+Implementado según [ADR-174](../decisiones/174-adaptadores-pruebas-guardado-local.md). El guardado real recibe contratos LocalCipher y OfflinePetFiles. En producción conserva AndroidKeystoreCipher y NativeOfflinePetFiles; las pruebas inyectan versiones en memoria. La ausencia de archivo devuelve ahora lista vacía, en lugar de null, para cumplir el caso (c). Esto también aplica al fallback de la lista en la app si no existe copia; los errores de descifrado quedan para el ítem 5.
+
+Pruebas: apps/mobile/test/offline_pet_storage_test.dart. Simulados: apps/mobile/test/support/fake_offline_pet_adapters.dart. El cifrado simulado usa tokens opacos asociados al original en memoria; no es cifrado real y nunca se usa en la app. El archivo simulado almacena copias de bytes en un mapa, sin crear archivos de dispositivo ni del equipo.
+
+(a) Cliente Prueba no aparece en el contenido guardado; se comprueba además que el archivo contiene los bytes obtenidos del cifrado. (b) Tres mascotas se guardan, se reabre el almacenamiento y se recuperan con el mismo orden y valores. (c) Sin archivo guardado, devuelve una lista vacía sin error ni llamadas al descifrado.
+
+En PowerShell, sin emulador ni conexión:
+
+```powershell
+cd C:\QWERTY\entrehuellas\apps\mobile
+flutter test --no-pub --reporter expanded test/offline_pet_storage_test.dart
+```
+
+Resultado ejecutado: +3: All tests passed! Salida real conservada en output/examen-item-4/pruebas-terminal.txt. Para evidencia de terminal, ejecutar el comando y capturar el comando y los tres casos aprobados. Para evidencia de código, abrir el archivo de pruebas y el de simulados en el editor y capturar sus bloques legibles.
+
+Validación adicional: flutter analyze sin incidencias; 25 pruebas seleccionadas aprobadas (estas tres más arquitectura, mascotas, actualización y protección). No se modifica el estado del emulador ni se implementa el ítem 5.

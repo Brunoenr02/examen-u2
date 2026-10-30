@@ -1,18 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/pet.dart';
 import '../../domain/repositories/offline_pet_storage.dart';
 import '../models/pet_dto.dart';
 import '../../../../core/platform/android_keystore_cipher.dart';
+import '../../../../core/platform/local_cipher.dart';
+import 'offline_pet_files.dart';
 
 /// Item 2: only an authenticated encrypted envelope is written to disk.
 class OfflinePetFileSource implements OfflinePetStorage {
-  OfflinePetFileSource({Future<Directory> Function()? directory})
-    : _directory = directory ?? getApplicationSupportDirectory;
-  final Future<Directory> Function() _directory;
-  final _cipher = AndroidKeystoreCipher();
+  OfflinePetFileSource({
+    Future<Directory> Function()? directory,
+    OfflinePetFiles? files,
+    LocalCipher? cipher,
+  }) : _files = files ?? NativeOfflinePetFiles(directory: directory),
+       _cipher = cipher ?? AndroidKeystoreCipher();
+  final OfflinePetFiles _files;
+  final LocalCipher _cipher;
   Future<void> _pending = Future.value();
 
   // Serialize file operations so deleting cannot race an unfinished save.
@@ -24,36 +29,22 @@ class OfflinePetFileSource implements OfflinePetStorage {
 
   @override
   Future<void> deleteAll() => _serial(() async {
-    final directory = await _directory();
-    if (await directory.exists()) {
-      final pattern = RegExp(
-        r'^pets_[A-Za-z0-9_-]+_(active|archived)\.json(\.tmp)?$',
-      );
-      await for (final entity in directory.list(followLinks: false)) {
-        if (entity is File && pattern.hasMatch(entity.uri.pathSegments.last)) {
-          await entity.delete();
-        }
-      }
-    }
+    await _files.deleteAll();
     await _cipher.deleteKey();
   });
 
   String _context(String ownerId, bool archived) =>
       'entrehuellas/pets/v1/$ownerId/${archived ? 'archived' : 'active'}';
 
-  Future<File> _file(String ownerId, bool archived) async {
-    final directory = await _directory();
-    await directory.create(recursive: true);
+  String _fileName(String ownerId, bool archived) {
     final account = base64Url.encode(utf8.encode(ownerId)).replaceAll('=', '');
-    return File(
-      '${directory.path}/pets_${account}_${archived ? 'archived' : 'active'}.json',
-    );
+    return 'pets_${account}_${archived ? 'archived' : 'active'}.json';
   }
 
   @override
   Future<void> save(String ownerId, List<Pet> pets, {bool archived = false}) =>
       _serial(() async {
-        final file = await _file(ownerId, archived);
+        final name = _fileName(ownerId, archived);
         final rows = pets
             .map(
               (p) => <String, dynamic>{
@@ -73,22 +64,20 @@ class OfflinePetFileSource implements OfflinePetStorage {
               },
             )
             .toList();
-        final temporary = File('${file.path}.tmp');
         final encrypted = await _cipher.encrypt(
           Uint8List.fromList(utf8.encode(jsonEncode(rows))),
           _context(ownerId, archived),
         );
-        await temporary.writeAsBytes(encrypted, flush: true);
-        await temporary.rename(file.path);
+        await _files.writeAtomic(name, encrypted);
       });
 
   @override
   Future<List<Pet>?> read(String ownerId, {bool archived = false}) =>
       _serial(() async {
-        final file = await _file(ownerId, archived);
-        if (!await file.exists()) return null;
+        final encrypted = await _files.read(_fileName(ownerId, archived));
+        if (encrypted == null) return <Pet>[];
         final plaintext = await _cipher.decrypt(
-          await file.readAsBytes(),
+          encrypted,
           _context(ownerId, archived),
         );
         final rows = jsonDecode(utf8.decode(plaintext)) as List;

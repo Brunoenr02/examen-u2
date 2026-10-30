@@ -1,0 +1,5 @@
+00:00 +0: loading C:/QWERTY/entrehuellas/apps/mobile/test/offline_pet_storage_test.dart
+00:00 +0: (a) El archivo guardado no contiene Cliente Prueba
+00:00 +1: (b) Tres registros guardados y leídos son iguales a los originales
+00:00 +2: (c) Sin archivo guardado la lectura devuelve una lista vacía sin error
+00:00 +3: All tests passed!
