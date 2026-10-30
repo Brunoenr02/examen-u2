@@ -1,0 +1,21 @@
+adb shell run-as com.example.flutter_application_entrehuellas ls files
+adb shell run-as com.example.flutter_application_entrehuellas cat files/pets_MDFmMTRhNjctNjU5OS00NmZiLTkyYzYtN2JhM2U5YzY4OWE0_active.json
+[
+  {
+    "id": "cfc404ea-0b10-4f10-80f0-9e0bb180c501",
+    "owner_id": "01f14a67-6599-46fb-92c6-7ba3e9c689a4",
+    "version": 1,
+    "name": "Luna_Prueba",
+    "species": "dog",
+    "sex": "male",
+    "age_months": 12,
+    "traits": "Pelaje pardo dato de prueba",
+    "species_detail": null,
+    "size": "medium",
+    "archived_at": null,
+    "case_history_at": null,
+    "active_case_count": 0
+  }
+]
+
+Verificación posterior a force-stop y apertura en modo avión: airplane_mode_on=1; Wi-Fi desactivado; UI muestra Luna_Prueba / Perro desde JSON local.

@@ -9022,3 +9022,6 @@ formato correcto. Diagnóstico temporal retirado tras usar fuente/cliente reales
 No se desplegó. La corrección recupera respuestas válidas, no acelera el servidor
 ni garantiza3s. Siguiente paso: revisión Android/red del usuario y, si persiste
 latencia, evaluar proveedor/cobertura/condiciones con evidencia de ese entorno.
+
+30/10/2026: ítem 1 del examen tipo 4: botón Guardar sin conexión en Mis mascotas, JSON privado por cuenta/filtro y fallback ante unavailable. Análisis sin incidencias, 20 pruebas existentes aprobadas, APK debug compilado e instalado; run-as muestra Luna_Prueba en claro. Evidencia y repetición en docs/funcionalidades/mascotas-sin-conexion-examen.md. Sin implementación de ítems 2–5.
+Verificación adicional del ítem 1: reinicio completo sin red y lectura local confirmados en emulator-5554; captura lista-modo-avion.png en output/examen-item-1. Emulador en modo avión para revisión.

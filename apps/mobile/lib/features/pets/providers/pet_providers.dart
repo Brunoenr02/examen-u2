@@ -1,4 +1,7 @@
 import '../domain/services/pet_changes.dart';
+import '../domain/repositories/offline_pet_storage.dart';
+import '../domain/use_cases/offline_pets.dart';
+
 import '../domain/use_cases/notify_pet_changed.dart';
 import '../domain/use_cases/archive_pet.dart';
 import '../domain/use_cases/restore_pet.dart';
@@ -13,6 +16,12 @@ import '../domain/repositories/pet_photo_repository.dart';
 import '../domain/use_cases/manage_pet_photos.dart';
 import '../domain/use_cases/delete_pet.dart';
 
+final offlinePetStorageProvider = Provider<OfflinePetStorage>(
+  (ref) => throw StateError('OfflinePetStorage must be injected.'),
+);
+final offlinePetsProvider = Provider(
+  (ref) => OfflinePets(ref.watch(offlinePetStorageProvider)),
+);
 final deletePetProvider = Provider(
   (ref) => DeletePet(ref.watch(petRepositoryProvider)),
 );

@@ -38,6 +38,7 @@ class PetListViewModel extends AsyncNotifier<List<Pet>> {
     _refreshing = false;
     late final RetainedQuery retained;
     final useCase = ref.watch(listMyPetsProvider);
+
     final notice = ref.watch(petListRefreshNoticeProvider(archived).notifier);
     final session = await ref.watch(petSessionProvider.future);
     if (session == null) throw const PetFailure(PetFailureKind.signedOut);
@@ -78,7 +79,22 @@ class PetListViewModel extends AsyncNotifier<List<Pet>> {
         .watch(session.userId)
         .listen((_) => ref.invalidateSelf());
     ref.onDispose(changes.cancel);
-    final pets = await useCase(session.userId, archived: archived);
+    List<Pet> pets;
+    try {
+      pets = await useCase(session.userId, archived: archived);
+    } on PetFailure catch (error) {
+      if (error.kind != PetFailureKind.unavailable) rethrow;
+      List<Pet>? saved;
+      try {
+        saved = await ref
+            .read(offlinePetsProvider)
+            .read(session.userId, archived: archived);
+      } catch (_) {
+        throw error;
+      }
+      if (saved == null) rethrow;
+      pets = saved;
+    }
     if (ref.mounted && generation == _generation) {
       retained.markFresh();
       notice.clear();
@@ -87,6 +103,14 @@ class PetListViewModel extends AsyncNotifier<List<Pet>> {
   }
 
   void reload() => ref.invalidateSelf();
+
+  Future<void> saveOffline() async {
+    final pets = state.requireValue;
+    final offline = ref.read(offlinePetsProvider);
+    final session = await ref.read(petSessionProvider.future);
+    if (session == null) throw const PetFailure(PetFailureKind.signedOut);
+    await offline.save(session.userId, pets, archived: archived);
+  }
 }
 
 final petDetailViewModelProvider = AsyncNotifierProvider.autoDispose

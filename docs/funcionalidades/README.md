@@ -437,3 +437,5 @@ panel flotante conservados; latencia del proveedor variable. ADR-109.
 Ubicaciones20/10: [corrección de espera y búsqueda parcial](ubicaciones-buscador.md).
 Pausa600ms restaurada; timeout20s para respuestas válidas tardías del proveedor.
 `tacn` devuelve Tacna en consulta real; cancelación/Perú/panel conservados. ADR-110.
+
+- [Guardado de mascotas sin conexión para el ítem 1](mascotas-sin-conexion-examen.md): JSON privado legible y recuperación ante fallo remoto, limitado al examen.

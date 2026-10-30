@@ -1,4 +1,5 @@
 import '../../../../core/presentation/widgets/collection_header.dart';
+import '../../../../core/presentation/widgets/loading_shimmer.dart';
 import '../../../../core/presentation/widgets/collection_empty_state.dart';
 import '../../../../core/presentation/widgets/pull_to_refresh.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,10 @@ class PetsSection extends ConsumerStatefulWidget {
 class _PetsSectionState extends ConsumerState<PetsSection> {
   bool _sawSkeleton = false;
   bool _archived = false;
+  bool _savingOffline = false;
+  String? _offlineMessage;
+  bool _offlineError = false;
+  int _offlineNotice = 0;
   @override
   Widget build(BuildContext context) {
     final listProvider = _archived
@@ -48,22 +53,27 @@ class _PetsSectionState extends ConsumerState<PetsSection> {
       },
       child: ConfirmationToastHost(
         confirmed:
+            _offlineMessage != null ||
             deletion.confirmed ||
             deletion.issue != null ||
             (showData && refreshNotice != null),
-        noticeId: (deletion.noticeId, refreshNotice),
-        isError: deletion.issue != null || refreshNotice != null,
-        message: showData && refreshNotice != null
-            ? 'No pudimos actualizar tus mascotas. Puedes reintentar.'
-            : deletion.issue == null
-            ? 'Mascota eliminada'
-            : deletion.issue == PetFailureKind.conflict
-            ? 'La ficha cambió. Actualiza la lista antes de eliminarla.'
-            : deletion.issue == PetFailureKind.activeCase
-            ? 'Resuelve o cancela el caso activo antes de eliminar.'
-            : deletion.issue == PetFailureKind.caseHistory
-            ? 'Esta mascota tiene historial de casos. Puedes archivarla desde su ficha.'
-            : 'No se pudo eliminar la mascota. Desliza para reintentar.',
+        noticeId: (deletion.noticeId, refreshNotice, _offlineNotice),
+        isError: _offlineMessage != null
+            ? _offlineError
+            : deletion.issue != null || refreshNotice != null,
+        message:
+            _offlineMessage ??
+            (showData && refreshNotice != null
+                ? 'No pudimos actualizar tus mascotas. Puedes reintentar.'
+                : deletion.issue == null
+                ? 'Mascota eliminada'
+                : deletion.issue == PetFailureKind.conflict
+                ? 'La ficha cambió. Actualiza la lista antes de eliminarla.'
+                : deletion.issue == PetFailureKind.activeCase
+                ? 'Resuelve o cancela el caso activo antes de eliminar.'
+                : deletion.issue == PetFailureKind.caseHistory
+                ? 'Esta mascota tiene historial de casos. Puedes archivarla desde su ficha.'
+                : 'No se pudo eliminar la mascota. Desliza para reintentar.'),
         actionLabel:
             deletion.issue == PetFailureKind.conflict ||
                 (showData && refreshNotice != null)
@@ -98,6 +108,45 @@ class _PetsSectionState extends ConsumerState<PetsSection> {
                     },
             ),
             const SizedBox(height: 24),
+            LoadingShimmer(
+              isLoading: _savingOffline,
+              loadingLabel: 'Guardando sin conexión',
+              child: OutlinedButton.icon(
+                onPressed: !showData || _savingOffline
+                    ? null
+                    : () async {
+                        setState(() {
+                          _savingOffline = true;
+                          _offlineMessage = null;
+                        });
+                        try {
+                          await ref.read(listProvider.notifier).saveOffline();
+                          if (!mounted) return;
+                          setState(() {
+                            _offlineMessage = 'Lista guardada sin conexión';
+                            _offlineError = false;
+                          });
+                        } catch (_) {
+                          if (!mounted) return;
+                          setState(() {
+                            _offlineMessage =
+                                'No se pudo guardar la lista. Reintenta.';
+                            _offlineError = true;
+                          });
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _savingOffline = false;
+                              _offlineNotice++;
+                            });
+                          }
+                        }
+                      },
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Guardar sin conexión'),
+              ),
+            ),
+            const SizedBox(height: 12),
             StaggerRevealItem(
               order: 1,
               enabled: !_sawSkeleton,
