@@ -439,3 +439,5 @@ Pausa600ms restaurada; timeout20s para respuestas válidas tardías del proveedo
 `tacn` devuelve Tacna en consulta real; cancelación/Perú/panel conservados. ADR-110.
 
 - [Guardado de mascotas sin conexión para el ítem 1](mascotas-sin-conexion-examen.md): JSON privado legible y recuperación ante fallo remoto, limitado al examen.
+
+- Ítem 2 del examen: [cifrado de mascotas con Android Keystore](mascotas-sin-conexion-examen.md#ítem-2-cifrado-con-clave-custodiada-por-android), AES-GCM y reinstalación limpia; ADR-172.
