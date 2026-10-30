@@ -1,243 +1,83 @@
-<div align="center">
+# Examen práctico de la Unidad II
 
-  <img src="apps/mobile/assets/branding/app_icon.png" alt="Icono de Entre Huellas" width="136" />
-  <h1>Entre Huellas</h1>
-  <p><strong>Cada huella puede ayudar a volver a casa.</strong></p>
-  <p>Proyecto grupal de recuperación colaborativa de mascotas · MVP con prioridad Android</p>
-  <p>
-    <img src="https://img.shields.io/badge/Flutter-3.35.3-02569B?logo=flutter&amp;logoColor=white" alt="Flutter 3.35.3" />
-    <img src="https://img.shields.io/badge/Dart-3.9.2-0175C2?logo=dart&amp;logoColor=white" alt="Dart 3.9.2" />
-    <img src="https://img.shields.io/badge/Android-primero-3DDC84?logo=android&amp;logoColor=white" alt="Android primero" />
-    <img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&amp;logoColor=white" alt="Backend Supabase" />
-    <img src="https://img.shields.io/badge/Estado-MVP_en_desarrollo-F4A261" alt="MVP en desarrollo" />
-  </p>
-  <p>
-    <a href="#primeros-pasos">Primeros pasos</a> ·
-    <a href="#configuracion-local">Configuración</a> ·
-    <a href="INSTALACION_ANDROID.md">Instalar/publicar APK</a> ·
-    <a href="#trabajo-en-equipo">Colaborar</a> ·
-    <a href="#documentacion">Documentación</a>
-  </p>
-</div>
+**Curso:** SI-988 Soluciones Móviles II
 
----
+**Tipo de examen:** 4
 
-## 🐾 Sobre el proyecto
+**Proyecto móvil:** Entre Huellas, aplicación Flutter para Android.
 
-Entre Huellas conecta a quienes buscan una mascota con personas que pueden aportar información para recuperarla. El MVP contempla búsquedas de mascotas perdidas, avisos vinculados, fichas públicas mediante QR y seguimiento de la recuperación.
+El desarrollo se aplica a la lista real de **Mis mascotas**. El usuario puede guardar esa lista para consultarla sin conexión, proteger su contenido y eliminar la copia local del teléfono.
 
-Las coincidencias visuales también forman parte del MVP (HU-25/#71 y HU-26/#72),
-con hallazgos independientes y revisión humana. La implementación está en
-`feature/case-matching`; el patch040 fue aplicado según confirmación del usuario.
-La evaluación con fotos autorizadas, la prueba entre dos cuentas y la aceptación
-siguen pendientes. Consulta el [recorrido y la configuración](docs/funcionalidades/coincidencias-de-casos.md).
+## Cambios implementados
 
-La app cuenta con implementaciones de acceso y onboarding por cuenta, perfil, mascotas y fotos, zonas de interés, preferencias de alertas, búsquedas y avisos vinculados, y consulta de Mis reportes. **Implementado no significa historia cerrada ni despliegue confirmado**: la evidencia y los pendientes se registran en [las fichas funcionales](docs/funcionalidades/README.md) y [el estado del proyecto](docs/ESTADO.md).
-
-Explorar, la web pública QR y la entrega real de alertas tienen trabajo pendiente. Guardar preferencias de alertas no implica que ya se envíen notificaciones. Consulta el alcance en [la guía del MVP](docs/GUIA_MVP.md).
-
-<a id="primeros-pasos"></a>
-
-## 🚀 Primeros pasos
-
-Las aplicaciones se organizan en dos directorios:
-
-- [apps/mobile](apps/mobile/README.md): Flutter para Android y futuras plataformas móviles.
-- [apps/platform](apps/platform/README.md): Vue/Nuxt/TypeScript para la plataforma web.
-
-Base de datos, funciones y documentación permanecen en database, supabase y docs.
-Para desarrollar la web, seguir [la guía Vue](apps/platform/DESARROLLO.md);
-los pasos siguientes corresponden a Flutter. Véase [ADR-059](docs/decisiones/059-directorios-apps-platform-mobile.md).
-
-Esta guía está dirigida a los integrantes del equipo que van a ejecutar o desarrollar la app desde el código fuente.
-
-### 1. Preparar el equipo
-
-| Herramienta | Referencia del proyecto |
+| Ítem | Cambios realizados |
 | --- | --- |
-| Git | Clonar el repositorio y trabajar con ramas |
-| Flutter | **3.35.3 stable**, versión fijada en el workflow Flutter |
-| Dart | **3.9.2**, incluido en esa instalación de Flutter |
-| Android Studio / Android SDK | SDK, herramientas y emulador para Android |
-| Editor | VS Code con extensiones Dart/Flutter o Android Studio |
-| Dispositivo | Emulador iniciado o teléfono Android con depuración USB |
+| 1. Guardado sin conexión y revisión externa | Se añadió el botón **Guardar sin conexión** en Mis mascotas. La lista se guarda en soporte privado, separada por cuenta y filtro de activas/archivadas, y se recupera cuando falla la consulta al backend. En esta etapa se comprobó con `adb shell run-as` que el JSON era legible en texto claro. |
+| 2. Cifrado con clave del sistema | Se sustituyó el guardado en claro por **AES-256-GCM**, con IV aleatorio nuevo en cada guardado y clave generada y custodiada en **Android Keystore**. La clave no se escribe en el código ni se exporta a Dart. Se desinstaló y reinstaló la app para eliminar el archivo anterior; se verificaron contenido cifrado y consulta sin conexión después de reiniciar. |
+| 3. Respaldo, pantalla y borrado | Se deshabilitó el respaldo y se añadieron exclusiones para nube y transferencia entre dispositivos. Mis mascotas activa **FLAG_SECURE** antes de mostrar la lista; Android 13 o superior también deshabilita la miniatura de recientes. En Perfil se añadió **Borrar datos de este teléfono**, que elimina las copias locales de mascotas, sus temporales y la clave de instalación. El borrado se confirma únicamente tras completar ambas operaciones. |
+| 4. Tres pruebas del guardado | Se incorporaron adaptadores simulados de archivo y cifrado. Las pruebas comprueban que el archivo no contenga **Cliente Prueba**, que tres registros se recuperen iguales y que la lectura sin archivo devuelva una lista vacía sin error. |
+| 5. Dos pruebas de archivo dañado y borrado | Se añadió un resultado de lectura con lista y mensaje. Un fallo de lectura, descifrado o formato devuelve una lista vacía con **Datos locales no disponibles, conéctese para actualizar**. Las pruebas alteran un archivo simulado y verifican la recuperación sin excepción; también comprueban que el borrado elimine su contenido y la clave simulada. |
 
-Comprueba tu instalación:
+El estado final guarda únicamente el archivo cifrado. El nombre conserva la extensión `.json`, pero su contenido es binario. Las evidencias del archivo en claro corresponden a la etapa inicial del ítem 1. El borrado afecta la copia sin conexión del examen y su clave; las mascotas del servidor y la cuenta se conservan.
 
-```powershell
-flutter --version
-flutter doctor
-flutter devices
-```
+## Archivos del proyecto móvil afectados
 
-Resuelve los requisitos Android que indique `flutter doctor`. Si faltan licencias, revisa sus términos mediante `flutter doctor --android-licenses`.
+Todas las rutas siguientes son relativas a `apps/mobile/`.
 
-### 2. Clonar e instalar dependencias
+### Android
 
-Con acceso al repositorio:
-
-```powershell
-git clone https://github.com/srg-cp/entrehuellas.git
-Set-Location entrehuellas
-Set-Location apps/mobile
-flutter pub get --enforce-lockfile
-```
-
-La app se conserva en **`apps/mobile`**. No hay que regenerarla ni trasladarla. Si ya tienes una copia, utiliza esa copia y revisa sus cambios antes de actualizarla.
-
-<a id="configuracion-local"></a>
-
-## 🔑 Archivo de configuración
-
-**La plantilla que necesitas ya está incluida:** [supabase.local.example.json](apps/mobile/config/supabase.local.example.json).
-
-Desde la carpeta de la app, cópiala una sola vez:
-
-```powershell
-Copy-Item config/supabase.local.example.json config/supabase.local.json
-```
-
-Si `config/supabase.local.json` ya existe, conserva tu configuración. El responsable del proyecto **compartirá internamente los valores del entorno de desarrollo** para completar ese archivo.
-
-| Campo | Qué colocar |
+| Archivo | Cambio |
 | --- | --- |
-| `SUPABASE_URL` | URL HTTPS del entorno de desarrollo compartido |
-| `SUPABASE_PUBLISHABLE_KEY` | Clave publicable del mismo entorno, con prefijo `sb_publishable_` |
-| `EMAIL_OTP_VALIDITY_MINUTES` | Minutos de validez del código, solo si coinciden con la configuración real del servidor |
+| `android/app/src/main/AndroidManifest.xml` | Deshabilita respaldo y referencia las reglas de extracción. |
+| `android/app/src/main/res/xml/backup_rules.xml` | Excluye los datos del respaldo en Android 11 o anterior. |
+| `android/app/src/main/res/xml/data_extraction_rules.xml` | Excluye datos de nube y transferencia entre dispositivos en Android 12 o posterior. |
+| `android/app/src/main/kotlin/com/example/flutter_application_entrehuellas/MainActivity.kt` | Registra los canales nativos de cifrado, borrado de clave y protección de pantalla; deshabilita miniaturas de recientes en Android 13 o superior. |
+| `android/app/src/main/kotlin/com/example/flutter_application_entrehuellas/OfflinePetsCipher.kt` | Genera/consulta la clave en Android Keystore, cifra y descifra con AES-GCM, genera el IV y elimina la clave. |
 
-La plantilla contiene `15` para la validez del código: confírmalo con el responsable. Si el plazo no está confirmado, elimina ese campo; la app puede mostrar la instrucción sin afirmar una duración. Este valor informa en la interfaz y **no modifica la caducidad del servidor**.
+### Aplicación Flutter
 
-> El archivo `*.local.json` está ignorado por Git. No lo adjuntes a issues ni pull requests. Flutter incorpora estos valores al cliente: aquí solo van datos de configuración pública, nunca `service_role`, claves secretas, contraseñas SQL o tokens personales.
-
-No necesitas acceso administrativo a Supabase para ejecutar la app. Usa una cuenta de prueba propia y coordina con el responsable la activación del backend que requiera tu módulo. Copiar el JSON no crea tablas, políticas, funciones ni buckets.
-
-## ▶️ Ejecutar la app
-
-Desde `apps/mobile`, con el emulador o teléfono disponible:
-
-```powershell
-flutter run --dart-define-from-file=config/supabase.local.json
-```
-
-Si hay varios dispositivos, consulta `flutter devices` y añade `-d <id-del-dispositivo>` al comando. Al modificar la configuración, detén y vuelve a ejecutar la app: hot reload no actualiza los valores de compilación.
-
-En **VS Code**, selecciona **Entre Huellas - desarrollo local** en Ejecutar y depurar, elige el dispositivo y pulsa **F5**. Ese perfil utiliza el mismo archivo local.
-
-El recorrido comienza en acceso; una cuenta que no completó el onboarding debe finalizar sus tres etapas antes de entrar. El retorno móvil utiliza `entrehuellas://login-callback/`; su configuración y las pruebas reales de acceso están en [CONFIGURACION.md](docs/CONFIGURACION.md).
-
-Si falla el acceso o falta una función remota, confirma el entorno y la activación del incremento con el responsable. No ejecutes todo el SQL sobre el servidor compartido para intentar resolverlo.
-
-## 📦 Instalar y publicar Android
-
-La [guía paso a paso de instalación y distribución](INSTALACION_ANDROID.md)
-explica cómo generar y respaldar la firma, completar el JSON local, guardar los
-cinco secrets en GitHub, activar la compilación desde `main`, descargar el APK
-e instalarlo o actualizarlo en un teléfono. Incluye compilación local y solución
-de errores, con comandos e indicaciones de dónde ejecutar cada paso.
-
-El workflow está preparado para publicar una **prerelease con APK firmado** por
-cada push a `main` que supere las validaciones. El usuario confirmó el24/10 la
-configuración de firma, los cinco secrets y `key.properties` local; el
-[inventario y estado de preparación](INSTALACION_ANDROID.md#estado-de-la-preparacion)
-indica de dónde sale cada dato y los pendientes de respaldo, integración y
-validación de Actions. No implica despliegue de Supabase
-ni publicación en Google Play. Quien solo instala el APK no necesita Flutter,
-el JSON ni las credenciales de firma.
-
-<a id="trabajo-en-equipo"></a>
-
-## 🤝 Trabajo en equipo
-
-### Antes de empezar un módulo
-
-1. Acuerda la **HU/RF**, el issue, los criterios de aceptación y los límites de la entrega. El identificador de historia y el número del issue son distintos.
-2. Confirma la rama o commit de partida. `main` es la base integrada; si necesitas trabajo aún no integrado, acuerda expresamente otra base.
-3. Lee [AGENTS.md](AGENTS.md), [las reglas de arquitectura](docs/REGLAS_ARQUITECTURA.md), [la arquitectura](docs/ARQUITECTURA.md), [el estado](docs/ESTADO.md), el sprint y la ficha funcional correspondientes.
-4. Si modificas pantallas, lee también [las reglas de UI/UX](docs/REGLAS_UI_UX.md) y [la guía de diseño](docs/DISENO_UI.md).
-5. Coordina contratos compartidos, cambios en router/bootstrap/core y numeración SQL antes de trabajar sobre ellos.
-
-Con tu copia limpia y usando `main` como base acordada, desde la raíz del repositorio:
-
-```powershell
-git status
-git switch main
-git pull --ff-only origin main
-git switch -c feature/nombre-del-modulo
-```
-
-### Arquitectura de cada entrega
-
-```text
-Pantalla → ViewModel → Caso de uso → Contrato de repositorio
-                                      ↑ implementación inyectada
-                             Repositorio de data → Fuente de datos → SDK
-```
-
-- **Dominio:** entidades, contratos, casos de uso y fallos independientes de Flutter, Riverpod y Supabase.
-- **Presentación:** pantallas, widgets, ViewModels y estado. Los widgets consumen ViewModels; las operaciones de producto pasan por casos de uso.
-- **Datos:** DTO, repositorios y fuentes de datos que encapsulan el SDK. Bootstrap/main inyectan las implementaciones.
-- **Colaboración entre módulos:** mediante dominio y providers declarativos; sin importar presentation/data de otra funcionalidad ni features desde core.
-- **Interfaz:** reutilizar los componentes aprobados. Toast superior para validación, errores y resultados; skeleton y `LoadingShimmer` para carga. Sin SnackBar, errores bajo inputs ni indicadores circulares/lineales.
-- **Persistencia:** permisos y reglas críticas también en servidor. SQL versionado, migraciones generadas y RLS comprobada según [database/README.md](database/README.md). No modificar migraciones aplicadas ni editar manualmente `run_all.sql`.
-
-Entrega incrementos completos por funcionalidad: comportamiento, persistencia, permisos, estados y pruebas pertinentes. No añadas funcionalidades futuras solo porque figuran en el plan maestro.
-
-### Antes de entregar el pull request
-
-Desde la carpeta de la app:
-
-```powershell
-dart format --output=none --set-exit-if-changed lib test
-flutter analyze --no-pub
-flutter test --no-pub
-```
-
-Si cambias dependencias, resuélvelas primero y entrega el lockfile actualizado. El comando de formato comprueba cambios: si falla, aplica `dart format lib test` y vuelve a comprobar.
-
-- Revisa el diff y comprueba que no contiene configuración local ni secretos.
-- Verifica los criterios, fallos, reintentos y permisos afectados. Para UI, revisa tamaño normal, pantalla pequeña y texto ampliado.
-- Actualiza [ESTADO.md](docs/ESTADO.md) y la ficha de [funcionalidades](docs/funcionalidades/README.md); registra pruebas ejecutadas y pendientes reales.
-- Abre el PR hacia la base acordada con [la plantilla del repositorio](.github/pull_request_template.md), vincula el issue y solicita revisión antes de integrar.
-- Acuerda con el responsable cualquier despliegue, migración o cambio del entorno compartido.
-
-El [workflow Flutter](.github/workflows/flutter.yml) define formato, análisis y pruebas; sus ejecuciones se consultan en [GitHub Actions](https://github.com/srg-cp/entrehuellas/actions). Una prueba local aprobada no confirma un despliegue ni una validación real en Android/Supabase.
-
-## 🗂️ Mapa del repositorio
-
-```text
-entrehuellas/
-├── apps/mobile/   App Flutter existente
-│   ├── config/                        Plantillas de configuración
-│   ├── lib/app/                       Bootstrap, aplicación y router
-│   ├── lib/core/                      Configuración y componentes compartidos
-│   ├── lib/features/                  Domain, data, presentation y providers por funcionalidad
-│   └── test/                          Pruebas, incluidas fronteras arquitectónicas
-├── database/                          Fuentes SQL y generadores de migraciones
-├── supabase/                          Migraciones, Edge Functions y configuración de servidor
-├── docs/                              Reglas, funcionalidades, backlog y decisiones
-├── logo/                              Originales del icono del sistema
-└── .github/                           Workflows y plantillas de colaboración
-```
-
-<a id="documentacion"></a>
-
-## 📚 Documentación
-
-| Necesitas… | Consulta |
+| Archivo | Cambio |
 | --- | --- |
-| Preparar el entorno y diagnosticar acceso | [Configuración y validación](docs/CONFIGURACION.md) |
-| Configurar firma/secrets, publicar, instalar o actualizar el APK | [Instalación y distribución Android](INSTALACION_ANDROID.md) |
-| Conocer lo implementado y sus pendientes | [Estado](docs/ESTADO.md) · [Funcionalidades](docs/funcionalidades/README.md) |
-| Elegir y delimitar una entrega | [Guía MVP](docs/GUIA_MVP.md) · [Backlog](docs/BACKLOG_MVP.md) |
-| Respetar las fronteras de código | [Reglas](docs/REGLAS_ARQUITECTURA.md) · [Arquitectura](docs/ARQUITECTURA.md) |
-| Mantener la interfaz consistente | [Reglas UI/UX](docs/REGLAS_UI_UX.md) · [Diseño](docs/DISENO_UI.md) |
-| Entender las decisiones técnicas | [ADR-001](docs/decisiones/001-arquitectura-aplicacion.md) · [Decisiones](docs/decisiones/) |
-| Modificar datos o permisos | [Base de datos](database/README.md) |
-| Actualizar el icono Android | [Fuentes y regeneración](logo/README.md) |
-| Trabajar con un asistente de código | [Instrucciones del proyecto](AGENTS.md) |
+| `lib/main.dart` | Inyecta el almacenamiento local en la aplicación. |
+| `lib/core/platform/local_cipher.dart` | Define el contrato sustituible de cifrado, descifrado y borrado de clave. |
+| `lib/core/platform/android_keystore_cipher.dart` | Conecta Dart con el cifrado y borrado nativos sin recibir el material de la clave. |
+| `lib/core/presentation/widgets/secure_screen.dart` | Espera la confirmación de protección antes de mostrar la lista y oculta su contenido al abrir otra ruta. |
+| `lib/features/home/presentation/screens/home_screen.dart` | Aplica la protección a Mis mascotas. |
+| `lib/features/pets/providers/pet_providers.dart` | Declara el almacenamiento local y su caso de uso. |
+| `lib/features/pets/domain/repositories/offline_pet_storage.dart` | Define las operaciones de guardado, lectura y borrado local. |
+| `lib/features/pets/domain/use_cases/offline_pets.dart` | Expone las operaciones locales y valida cuenta y filtro de los registros recuperados. |
+| `lib/features/pets/domain/entities/offline_pet_read_result.dart` | Contiene la lista recuperada y el mensaje opcional de datos locales no disponibles. |
+| `lib/features/pets/data/data_sources/offline_pet_file_source.dart` | Serializa y recupera mascotas, coordina cifrado y archivo, serializa operaciones y devuelve un resultado recuperable ante corrupción. |
+| `lib/features/pets/data/data_sources/offline_pet_files.dart` | Implementa archivos privados, escritura temporal y reemplazo del archivo cifrado; elimina archivos y temporales. |
+| `lib/features/pets/data/data_sources/offline_pet_file_source_stub.dart` | Conserva el adaptador para destinos sin acceso nativo al archivo. |
+| `lib/features/pets/presentation/view_models/pet_list_view_model.dart` | Guarda la lista visible y usa la copia local cuando falla el backend; comunica el mensaje de recuperación. |
+| `lib/features/pets/presentation/widgets/pets_section.dart` | Añade el botón de guardado y los avisos de resultado/error. |
+| `lib/features/profile/presentation/view_models/local_data_deletion_view_model.dart` | Ejecuta el borrado, controla su estado e invalida la lista retenida. |
+| `lib/features/profile/presentation/screens/profile_screen.dart` | Añade el botón de borrado y su confirmación fuera de la pantalla protegida. |
 
----
+### Pruebas
 
-<div align="center">
-  <sub>Entre Huellas · Recuperación colaborativa de mascotas</sub>
-</div>
+| Archivo | Cambio |
+| --- | --- |
+| `test/support/fake_offline_pet_adapters.dart` | Simula archivo y cifrado en memoria, incluido el estado de la clave y su eliminación. |
+| `test/offline_pet_storage_test.dart` | Contiene las tres pruebas unitarias del ítem 4. |
+| `test/offline_pet_recovery_test.dart` | Contiene las dos pruebas unitarias del ítem 5. |
+| `test/secure_screen_test.dart` | Verifica la espera de protección, la navegación y la ocultación de datos si falla el canal. |
+
+## Ejecución de las pruebas del examen
+
+Desde la raíz del repositorio, abrir PowerShell y ejecutar:
+
+```powershell
+cd apps/mobile
+
+# Ítem 4: tres pruebas
+flutter test --no-pub --reporter expanded test/offline_pet_storage_test.dart
+
+# Ítem 5: dos pruebas
+flutter test --no-pub --reporter expanded test/offline_pet_recovery_test.dart
+```
+
+**Resultados obtenidos:** ítem 4, `+3: All tests passed!`; ítem 5, `+2: All tests passed!`. Las pruebas usan la fuente real de almacenamiento con reemplazos de archivo y cifrado en memoria; no necesitan emulador, internet ni datos reales. El cifrado simulado no es un algoritmo de seguridad y no se usa en producción.
+
+El análisis con `flutter analyze --no-pub` finalizó sin incidencias. La suite seleccionada de almacenamiento, recuperación, arquitectura, mascotas y protección completó 27 pruebas aprobadas. Las verificaciones nativas de los ítems 1 a 3 se realizaron en el emulador Android. La configuración de respaldo se comprobó en el paquete instalado; no se ejecutó una restauración en otro dispositivo.
