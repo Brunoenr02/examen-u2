@@ -1,0 +1,4 @@
+00:00 +0: loading C:/QWERTY/entrehuellas/apps/mobile/test/offline_pet_recovery_test.dart
+00:00 +0: (a) Archivo alterado devuelve lista vacía y mensaje sin lanzar error
+00:00 +1: (b) Borrar elimina el contenido del archivo y la clave
+00:00 +2: All tests passed!

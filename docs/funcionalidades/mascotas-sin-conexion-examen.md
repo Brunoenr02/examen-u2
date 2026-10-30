@@ -75,3 +75,22 @@ flutter test --no-pub --reporter expanded test/offline_pet_storage_test.dart
 Resultado ejecutado: +3: All tests passed! Salida real conservada en output/examen-item-4/pruebas-terminal.txt. Para evidencia de terminal, ejecutar el comando y capturar el comando y los tres casos aprobados. Para evidencia de código, abrir el archivo de pruebas y el de simulados en el editor y capturar sus bloques legibles.
 
 Validación adicional: flutter analyze sin incidencias; 25 pruebas seleccionadas aprobadas (estas tres más arquitectura, mascotas, actualización y protección). No se modifica el estado del emulador ni se implementa el ítem 5.
+
+## Ítem 5 Archivo dañado y borrado
+
+Implementado según [ADR-175](../decisiones/175-lectura-local-recuperable-y-pruebas-borrado.md). Archivo de pruebas: apps/mobile/test/offline_pet_recovery_test.dart. Reemplazos: apps/mobile/test/support/fake_offline_pet_adapters.dart, compartidos con el ítem 4.
+
+La fuente real ofrece readResult con OfflinePetReadResult: ante error al leer/descifrar/interpretar, devuelve lista vacía y el mensaje exacto «Datos locales no disponibles, conéctese para actualizar». read conserva su API de lista y tampoco lanza por corrupción. El ViewModel consume el resultado detallado en el fallback y la lista muestra el mensaje mediante el toast superior. Sin archivo devuelve lista vacía sin mensaje. El cifrado Android y el borrado nativo se conservan.
+
+(a) La prueba guarda datos y altera un byte del archivo simulado. Comprueba que se intentó descifrar, la operación no lanza excepción y se obtienen lista vacía y mensaje exacto. (b) Después de guardar y borrar, comprueba que el archivo simulado no tiene contenido, la clave simulada ya no existe, deleteKey fue llamado una vez y el token anterior no puede descifrarse. La lectura posterior está vacía y sin aviso de corrupción.
+
+Ejecutar desde PowerShell para la captura de terminal:
+
+```powershell
+cd C:\QWERTY\entrehuellas\apps\mobile
+flutter test --no-pub --reporter expanded test/offline_pet_recovery_test.dart
+```
+
+Resultado real: +2: All tests passed! Salida en output/examen-item-5/pruebas-terminal.txt. Capturar ambos bloques test del archivo de pruebas y MemoryOfflinePetFiles/FakeLocalCipher del archivo de reemplazos, con los nombres de archivos visibles. No se requiere internet ni emulador.
+
+Flutter analyze sin incidencias. Suite seleccionada con los ítems 4 y 5, arquitectura, mascotas, actualización y protección: 27 aprobadas. No se ejecutan pruebas nuevas sobre una clave o archivo reales de Android ni se altera el estado del emulador.

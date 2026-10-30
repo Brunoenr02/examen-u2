@@ -1,4 +1,5 @@
 import '../entities/pet.dart';
+import '../entities/offline_pet_read_result.dart';
 import '../failures/pet_failure.dart';
 import '../repositories/offline_pet_storage.dart';
 
@@ -7,6 +8,20 @@ class OfflinePets {
   final OfflinePetStorage storage;
 
   Future<void> deleteAll() => storage.deleteAll();
+
+  Future<OfflinePetReadResult> readResult(
+    String ownerId, {
+    bool archived = false,
+  }) async {
+    if (ownerId.isEmpty) throw const PetFailure(PetFailureKind.forbidden);
+    final result = await storage.readResult(ownerId, archived: archived);
+    if (result.pets.any(
+      (p) => p.ownerId != ownerId || p.isArchived != archived,
+    )) {
+      throw const PetFailure(PetFailureKind.forbidden);
+    }
+    return result;
+  }
 
   Future<void> save(String ownerId, List<Pet> pets, {bool archived = false}) {
     if (ownerId.isEmpty ||

@@ -445,3 +445,5 @@ Pausa600ms restaurada; timeout20s para respuestas válidas tardías del proveedo
 - Ítem 3 del examen: [respaldo, pantalla protegida y borrado local de mascotas](mascotas-sin-conexion-examen.md#ítem-3-respaldo-pantalla-y-borrado), ADR-173; validado en Android.
 
 - Ítem 4 del examen: [tres pruebas unitarias del guardado](mascotas-sin-conexion-examen.md#ítem-4-tres-pruebas-unitarias-del-guardado), simulados en memoria para cifrado y archivo; ADR-174.
+
+- Ítem 5 del examen: [archivo dañado y borrado](mascotas-sin-conexion-examen.md#ítem-5-archivo-dañado-y-borrado), resultado local recuperable y dos pruebas unitarias; ADR-175.

@@ -27,9 +27,12 @@ class FakeLocalCipher implements LocalCipher {
   int encryptCalls = 0;
   int decryptCalls = 0;
   Uint8List? lastEncrypted;
+  bool keyExists = false;
+  int deleteKeyCalls = 0;
 
   @override
   Future<Uint8List> encrypt(Uint8List bytes, String context) async {
+    keyExists = true;
     final token = Uint8List.fromList([0xff, ++encryptCalls]);
     _values[token.join(',')] = (
       plaintext: Uint8List.fromList(bytes),
@@ -43,12 +46,16 @@ class FakeLocalCipher implements LocalCipher {
   Future<Uint8List> decrypt(Uint8List bytes, String context) async {
     decryptCalls++;
     final value = _values[bytes.join(',')];
-    if (value == null || value.context != context) {
+    if (!keyExists || value == null || value.context != context) {
       throw StateError('Unknown test token or context');
     }
     return Uint8List.fromList(value.plaintext);
   }
 
   @override
-  Future<void> deleteKey() async => _values.clear();
+  Future<void> deleteKey() async {
+    deleteKeyCalls++;
+    keyExists = false;
+    _values.clear();
+  }
 }

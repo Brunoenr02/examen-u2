@@ -18,7 +18,7 @@ class PetListRefreshNotice extends Notifier<Object?> {
   }
 
   void clear() => state = null;
-  void failed() => state = Object();
+  void failed([String? message]) => state = message ?? Object();
 }
 
 final petListViewModelProvider =
@@ -80,24 +80,28 @@ class PetListViewModel extends AsyncNotifier<List<Pet>> {
         .listen((_) => ref.invalidateSelf());
     ref.onDispose(changes.cancel);
     List<Pet> pets;
+    String? localMessage;
     try {
       pets = await useCase(session.userId, archived: archived);
     } on PetFailure catch (error) {
       if (error.kind != PetFailureKind.unavailable) rethrow;
-      List<Pet>? saved;
       try {
-        saved = await ref
+        final saved = await ref
             .read(offlinePetsProvider)
-            .read(session.userId, archived: archived);
+            .readResult(session.userId, archived: archived);
+        pets = saved.pets;
+        localMessage = saved.message;
       } catch (_) {
         throw error;
       }
-      if (saved == null) rethrow;
-      pets = saved;
     }
     if (ref.mounted && generation == _generation) {
       retained.markFresh();
-      notice.clear();
+      if (localMessage == null) {
+        notice.clear();
+      } else {
+        notice.failed(localMessage);
+      }
     }
     return pets;
   }

@@ -64,7 +64,9 @@ class _PetsSectionState extends ConsumerState<PetsSection> {
         message:
             _offlineMessage ??
             (showData && refreshNotice != null
-                ? 'No pudimos actualizar tus mascotas. Puedes reintentar.'
+                ? refreshNotice is String
+                      ? refreshNotice
+                      : 'No pudimos actualizar tus mascotas. Puedes reintentar.'
                 : deletion.issue == null
                 ? 'Mascota eliminada'
                 : deletion.issue == PetFailureKind.conflict

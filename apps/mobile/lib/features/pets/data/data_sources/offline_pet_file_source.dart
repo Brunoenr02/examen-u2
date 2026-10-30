@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/offline_pet_read_result.dart';
 import '../../domain/repositories/offline_pet_storage.dart';
 import '../models/pet_dto.dart';
 import '../../../../core/platform/android_keystore_cipher.dart';
@@ -72,21 +73,35 @@ class OfflinePetFileSource implements OfflinePetStorage {
       });
 
   @override
-  Future<List<Pet>?> read(String ownerId, {bool archived = false}) =>
-      _serial(() async {
-        final encrypted = await _files.read(_fileName(ownerId, archived));
-        if (encrypted == null) return <Pet>[];
-        final plaintext = await _cipher.decrypt(
-          encrypted,
-          _context(ownerId, archived),
-        );
-        final rows = jsonDecode(utf8.decode(plaintext)) as List;
-        return rows
-            .map(
-              (row) => PetDto.fromMap(
-                Map<String, dynamic>.from(row as Map),
-              ).toEntity(),
-            )
-            .toList();
-      });
+  Future<List<Pet>?> read(String ownerId, {bool archived = false}) async =>
+      (await readResult(ownerId, archived: archived)).pets;
+
+  @override
+  Future<OfflinePetReadResult> readResult(
+    String ownerId, {
+    bool archived = false,
+  }) => _serial(() async {
+    try {
+      final encrypted = await _files.read(_fileName(ownerId, archived));
+      if (encrypted == null) return const OfflinePetReadResult(pets: []);
+      final plaintext = await _cipher.decrypt(
+        encrypted,
+        _context(ownerId, archived),
+      );
+      final rows = jsonDecode(utf8.decode(plaintext)) as List;
+      final pets = rows
+          .map(
+            (row) => PetDto.fromMap(
+              Map<String, dynamic>.from(row as Map),
+            ).toEntity(),
+          )
+          .toList();
+      return OfflinePetReadResult(pets: pets);
+    } catch (_) {
+      return const OfflinePetReadResult(
+        pets: [],
+        message: OfflinePetReadResult.unavailableMessage,
+      );
+    }
+  });
 }
